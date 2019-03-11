@@ -19,4 +19,5 @@ from app01 import views
 urlpatterns = [
     # path('admin/', admin.site.urls),
     path('users/', views.users),
+    path('students/',views.StudentsView.as_view())
 ]
