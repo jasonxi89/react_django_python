@@ -1,0 +1,258 @@
+3/10/2019
+  day128
+  回顾：
+    1. 开发模式
+        - 普通开发模式（前后端放在一起写，render重新渲染）。
+        - 前后端分离，交互通过URL（Ajax请求，返回json数据)，不需要再用FORM。
+          - 好处：后端数据源一套就行了
+    2. 后端开发
+        - 为前端提供URL(React API/接口的开发)
+        - 永远返回httpResponse，返回json使用json.dumps
+    3. Django FBV,CBV
+        - FBV function base view
+              def users(request):
+                  users_list = ['alex','oldBoy']
+                  return HttpResponse(json.dumps((users_list)))
+
+        - CBV class base view
+            路由:
+              path('students/',views.StudentsView.as_view())
+
+            视图:
+              from django.views import View
+
+
+              class StudentsView(View):
+                  def get(self, request, *args, **kwargs):
+                      return HttpResponse('GET方法')
+
+                  def post(self,request, *args, **kwargs):
+                      return HttpResponse('POST方法')
+
+                  def put(self,request, *args, **kwargs):
+                      return HttpResponse('PUT方法')
+
+                  def delete(self,request, *args, **kwargs):
+                      return HttpResponse('DELETE方法')
+
+                声明的get/post/put/delete就是方法，如果用function写就要写if method == POST, 但是CBV里就是直接def post
+    4. 列表生成时
+        class Foo:
+          pass
+
+        class Bar:
+          pass
+
+        v =  [item() for item in [Foo, Bar]]
+        v 是对象列表，都是Foo和Bar的对象，()是实例化
+    5. 面向对象
+        - 封装:
+          - 对同一类方法进行封装:
+            class File:
+              增删改查Crud
+
+            class DB:
+              增删改查Crud
+          - 将数据封装到对象中
+            class File:
+              def __init__(self,a1,a2):
+                  self.x1 = a1
+                  self.x2 = a2
+              增删改查Crud
+
+            obj1 = File(123,456)
+            obj2 = File(234,567)
+
+            如果定义的时候加个@property,那么不需要()实例化
+
+  今日概要：
+    1.restful 规范
+    2.django rest framework框架
+
+  内容详细：
+    0.FBV，CBV(class base views, function base views)
+        视图函数返回，要么是render,要么是redirect，要么是httpresponse
+        CBV，基于反射实现根据请求方法不同，执行不同的方法
+        原理：
+            url - > view方法 -> dispatch方法(反射执行其他方法:get,post,delete,put)(getattr)
+        流程：
+            class StudentsView(View):
+                def dispatch(self, request, *args, **kwargs):
+                  #因为父函数view其实就是运用了dispatch来区分get,post,delete,put方法，这里改写个子函数的dispatch方法，相当于加了个装饰器，先打印before，再调用父函数方法，再打印after,最后返回(父函数没有2个打印，直接实例化然后找对应的方法)
+                  print("before")
+                  ret = super(StudentsView,self).dispatch(request, *args, **kwargs)
+                  print("after")
+                  return ret
+        多继承左边优先
+        super(X,self):继承，下一个继承对象的方法
+        继承（多个类公用的功能，为了避免重复编写）
+
+        class mybaseview(object):
+            def dispatch(self,request, *args, **kwargs):
+                print("这就是套路")
+                ret = super(mybaseview, self).dispatch(request,  *args, **kwargs)
+                print("木有错")
+                return ret
+
+        #继承了2个，左边的优先，如果左边的方法没有，再去找右边的，mybaseview封装了dispatch方法(通过查看源码知道这个是CBV判断put/update/get/delete的方法)
+        class StudentsView(mybaseview,View):
+            def get(self, request, *args, **kwargs):
+                print("get方法")
+                return HttpResponse('GET方法')
+        面试题：
+            1.django 中间件(Middleware)：
+              - process_request
+              - process_view
+              - process_response
+              - process_exception
+              - process_render_template
+
+              django 1.10+的版本:先执行所有的process_request，路由匹配，再执行process_view，(dispatch)再执行视图函数，最后执行process_response.如果报错会执行exception,如果有render方法会执行render_template
+            2.使用中间件做过什么？
+              - 权限
+              - 用户登录认证
+              - csrf token实现：流程就是request携带中间件，然后找到路由，如果视图被装饰了，就不查CSRF了，如果没装饰，就检查CSRF，所以放在VIEW里面
+                  -- 放在VIEW里面：process_view，检查视图是否被装饰
+                  情况1： @csrf_exempt 写在函数声明前面，该函数免除csrf认证
+                          去请求体或cookie中获取token
+                  情况2： 在中间件（Middleware)中如果注释掉了CSRF认证，想给某个函数用CSRF认证，则用@csrf_protect（记得import)
+         CBV小知识：如果要给CBV的方法要不用CSRF TOKEN的话，要加在def dispatch里，而不是方法前面，记得引入包
+              方法1：
+                 class StudentsView(View):
+                        @method_decorator(csrf_exempt)
+                        def dispatch(self,request, *args, **kwargs):
+                           return super(StudentsView, self).dispatch(request, *args, **kwargs)
+              方法2：
+                  @method_decorator(csrf_exempt，name = 'dispatch') 这个name相当于方法名
+                  class StudentsView(View):
+                        XXXX
+
+        总结：
+            CBV：
+              - 本质：基于反射来实现
+              - 流程：先到路由，再到VIEW函数，再到DISPATCH（反射实现位置）
+              - 取消CSRF认证，装饰器需要加到dispatch方法上，并且使用Method_decorator(csrf_exempt)方法传进去
+
+              扩展：
+                -csrf
+                  - 基于中间件的process_view方法
+                  - 装饰器给单独函数进行认证（或无需认证）
+
+    1.restful规范(建议)
+      a. 接口开发
+      urlpatterns = [
+          path('creat_order/', views.creat_order),
+          path('read_order/', views.read_order),
+          path('update_order/',views.update_order),
+          path('delete_order/', views.delete_order),
+      ]
+      b.restful规范(建议)
+        1.根据Method不同做不同的操作，示例：
+
+            基于FBV：
+
+              urlpatterns = [
+                path('order/',views.order)
+              ]
+
+              path('order/',views.order)
+
+              def order(request):
+                  if request.method == "GET":
+                      return HttpResponse(‘获取订单’)
+                  elif request.method =="POST"
+                      return HttpResponse('创建订单')
+                  elif request.method =="PUT"
+                      return HttpResponse('更新订单')
+                  elif request.method =="DELETE"
+                      return HttpResponse('删除订单')
+
+             基于CBV：
+
+               urlpatterns = [
+                     path('order/',OrderView.as_view()),
+              ]
+
+              class OrderView(View):
+                  def get(self, request, *args, **kwargs):
+                      return HttpResponse(‘获取订单’)
+                  def post(self, request, *args, **kwargs):
+                      return HttpResponse('创建订单')
+                  def put(self, request, *args, **kwargs):
+                      return HttpResponse('更新订单')
+                  def delete(self, request, *args, **kwargs):
+                      return HttpResponse('删除订单')
+        2.RESTFUL规范：
+            http://www.cnblogs.com/wupeiqi/articles/7805382.html
+        3.restful API规范的认识
+            面试就是讲故事！
+            本质上就是一个规范，定义些规范，方便后台处理，方便前端记住，提高效率
+            没用以前，GET/POST等方法都要一个一个写，
+            最开始放在域名前面，出现了跨域问题，一旦出现跨域问题：CORS，JSONP
+            状态码/常用方法
+            10个规则
+         注意：推荐使用CBV(继承view)
+
+    2.django rest framework框架
+         pip3 install djangofrestframework
+
+         a.认证:
+            - 仅适用：写一个类
+            class MyAuthentication(object):
+                def authenticate(self,request):
+                    token = request._request.GET.get('token')
+                    #获取用户名和密码，去数据库校验
+                    if not token:
+                        raise exceptions.AuthenticationFailed('用户认证失败')
+                    return ("alex",None)
+
+
+                def authenticate_header(self,val):
+                    pass
+
+
+            class Dogview(APIView):
+
+                 authentication_classes = [MyAuthentication,]
+
+            - 源码流程:
+              dispatch
+
+3/11/2019
+  day129
+  内容回顾：
+    1.中间件:五个方法，
+                  - process_request
+                  - process_view
+                  - process_response
+                  - process_exception
+                  - process_render_template
+                  权限，用户认证，CSRF TOKEN
+    2.csrf原理：
+        用户get请求的时候，会返回给用户一个随机字符串，下次用户用Request请求的时候需要携带该字符串
+        Django处理，在中间件的process_view处理，也可以在装饰器单独进行设置
+        为什么是Process_view：因为有特殊的不需要匹配csrf,只有在process_view的时候才能找到函数，才会进行判断是不是要csrf认证
+
+    3.rest 10规范
+        看下跨域问题怎么解决
+    4.面向对象
+        封装，继承，多态
+        2类封装：1种是将相同的方法封装到类中，2种通过构造方法，把一些数据封装到每个对象中，封装起来以后打包使用
+        继承+多态：继承父的想法，并且可以自我定义，多继承：先左边，再右边
+        看源码：从实例化对象开始找,方法后面跟（），或者方法前面有@property
+    5.django请求声明周期
+        请求进来走wsgi，再走中间件，最后走视图，如果是函数直接执行就走了，如果是CBV，走dispatch，由反射找不同视图函数（view)，最后返回用户
+    6.django请求声明周期（包含rest framework框架)
+        请求进来走wsgi，再走中间件，最后走视图，如果是函数直接执行就走了，如果是CBV，走dispatch(framework的)，由反射找不同视图函数（view)，最后返回用户
+        ps:dispatch触发
+  今日内容：
+    1.认证
+    2.权限
+    3.节流(访问频率控制)
+    4.版本
+  今日内容：
+    1. 认证
+        问题：有些API需要用户需要登录成功之后，才能访问：有些无需登录就能访问。
+        解决:
+          a.创建两张表
+          b.用户登录(返回Toekn并保存到数据库)

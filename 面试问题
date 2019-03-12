@@ -1,0 +1,38 @@
+day128
+  1.中间件
+  2.csrf
+  3.CBV
+  4.规范
+    - 10条规范
+    - 认识
+  5.djangofrestframework
+    - 如何验证(基于数据库实现用户认证)
+    - 源码流程(面向对象回顾过程)
+python 问题整理
+  1.爬虫：
+    requests:
+      - url
+      - headers
+      - cookies
+      - data
+      - json
+      - params
+      - proxy
+
+    bs4:
+      - find  获得单独的
+      - findall 获得list
+      - text 文本
+      - attrs 属性
+  2.OSI 7/5层模型：
+      物理层
+  3.三次握手，四次挥手
+  4.TCP和UDP区别
+  5.路由器和交换机的区别
+  6.ARP协议
+  7.DNS解析
+  8.Http和Https
+  9.进程、线程、携程区别
+  10.GIL锁
+  11.进程如何实现共享
+    
