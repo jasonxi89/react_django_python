@@ -19,6 +19,7 @@ from django.urls import set_urlconf
 from app01 import views
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    path('users/', views.users),
-    path('students/',views.StudentsView.as_view())
+    # path('users/', views.users),
+    path('students/',views.StudentsView.as_view()),
+    path('dog/',views.Dogview.as_view()),
 ]
