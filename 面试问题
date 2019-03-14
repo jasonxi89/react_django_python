@@ -26,10 +26,17 @@ python 问题整理
       - attrs 属性
   2.OSI 7/5层模型：
       将一层一层模型，进行头+体的组合
-      头：描述体
-      物理层
+
+      应用层：文件传输，电子邮件，文件服务，虚拟终端：HTTP，DNS，隶属于应用层
+      表示层：数据格式化，代码转换，数据加密：隶属于应用层
+      会话层：建立、解除与别的接点的联系：隶属于应用层
+      传输层：提供端对端的接口，TCP/UDP,隶属于传输层
+      网络层: 为数据包选择路由，IP，属于网络层
+      数据链路层:传输有地址的帧以及错误检测功能，ARP，属于链路层
+      物理层:以二进制数据形式在物理媒体上传输数据，IEEE802
+
   3.三次握手，四次挥手:
-      
+
   4.TCP和UDP区别:
      先connect,收发，close
      直接发
@@ -45,6 +52,7 @@ python 问题整理
   8.Http和Https:
 
   9.进程、线程、携程区别:
+      https://stackoverflow.com/questions/3044580/multiprocessing-vs-threading-python]
       线程:LOCK/RLOCK
       Python如果想要多核，必须要多进程，多线程没用
       计算密集型用多进程（需要用CPU）
@@ -52,8 +60,122 @@ python 问题整理
       应用程序（软件）->多个进程 ->多个线程
       CPU工作最小单位是线程
       对于进程，每个进程共享一部分内存
-      协程(并发)：不真实存在，微线程，将线程进行分片，可以由程序员进行控制先执行哪段代码，在代码之间进行切换，处理计算是慢的，没意义因为要保留状态，但是遇到IO操作+非阻塞，就很快，比如说同时爬3个网站，发完3个IO操作就去干别的了
+      协程(并发)：不真实存在，微线程，将线程进行分片，可以由程序员进行控制先执行哪段代码，在代码之间进行切换，处理计算是慢的，没意义因为要保留状态，
+      但是遇到IO操作+非阻塞，就很快，比如说同时爬3个网站，发完3个IO操作就去干别的了
+      进程不分享I/O schdule
+      线程分享I/O schdule
 
+      创建子进程时，只需要传入一个执行函数和函数的参数，创建一个Process实例，用start()方法启动，这样创建进程比fork()还要简单。
+      join()方法可以等待子进程结束后再继续往下运行，通常用于进程间的同步。
+          可以通过Process来构造一个子进程
+          p = Process(target=fun,args=(args))
+          再通过p.start()来启动子进程
+          再通过p.join()方法来使得子进程运行结束后再执行父进程
+      对Pool对象调用join()方法会等待所有子进程执行完毕，调用join()之前必须先调用close()，调用close()之后就不能继续添加新的Process了。
+
+     - 对于subproces.call() vs subproces.Popen
+        1、当你对shell命令的输出不感兴趣，只希望程序被运行，你可以典型的使用subprocess.call
+        2、如果你需要捕获命令的输出结果，那么你就需要使用subprocess.Popen
+        3. call会等结果，popen除非Popen.wait()否则不会等结果
+
+     - 如果子进程还需要输入，则可以通过communicate()方法输入
+        output, err = p.communicate(b'set q=mx\npython.org\nexit\n')
+
+        相当于手动输入：
+          set q=mx
+          python.org
+          exit
+
+      - 如果进程是死循环，那么terminate()来结束进程
+      - 线程:
+          启动一个线程就是把一个函数传入并创建Thread实例，然后调用start()开始执行：
+          Python的threading模块有个current_thread()函数，它永远返回当前线程的实例。
+          主线程实例的名字叫MainThread，子线程的名字在创建时指定，我们用LoopThread
+      - 多线程 VS 多进程：
+      多线程和多进程最大的不同在于，多进程中，同一个变量，各自有一份拷贝存在于每个进程中，互不影响，
+      而多线程中，所有变量都由所有线程共享，所以，任何一个变量都可以被任何一个线程修改，因此，线程之间共享数据最大的危险在于多个线程同时改一个变量，把内容给改乱了。
+      - 多进程的锁：
+          balance = 0
+          lock = threading.Lock()
+
+          def run_thread(n):
+              for i in range(100000):
+                  # 先要获取锁:
+                  lock.acquire()
+                  try:
+                      # 放心地改吧:
+                      change_it(n)
+                  finally:
+                      # 改完了一定要释放锁:
+                      lock.release()
+            try...finally来确保锁一定会被释放
+
+      - ThreadLocal最常用的地方就是为每个线程绑定一个数据库连接，HTTP请求，用户身份信息等，这样一个线程的所有调用到的处理函数都可以非常方便地访问这些资源。
+        一个ThreadLocal变量虽然是全局变量，但每个线程都只能读写自己线程的独立副本，互不干扰。ThreadLocal解决了参数在一个线程中各个函数之间互相传递的问题。
+      - 多线程模式致命的缺点就是任何一个线程挂掉都可能直接造成整个进程崩溃，因为所有线程共享进程的内存
+        多进程模式的缺点是创建进程的代价大，
+      - Python语言，单线程的异步编程模型称为协程，有了协程的支持，就可以基于事件驱动编写高效的多任务程序
+      - 分布式：Queue之所以能通过网络访问，就是通过QueueManager实现的。由于QueueManager管理的不止一个Queue，
+        所以，要给每个Queue的网络调用接口起个名字，比如get_task_queue。
+
+        authkey有什么用？这是为了保证两台机器正常通信，不被其他机器恶意干扰。
+        如果task_worker.py的authkey和task_master.py的authkey不一致，肯定连接不上。
+
+        注意Queue的作用是用来传递任务和接收结果，每个任务的描述数据量要尽量小。
+        比如发送一个处理日志文件的任务，就不要发送几百兆的日志文件本身，而是发送日志文件存放的完整路径，由Worker进程再去共享的磁盘上读取文件。
+      - 协程：
+        最大的优势就是协程极高的执行效率。因为子程序切换不是线程切换，而是由程序自身控制，因此，没有线程切换的开销，和多线程比，线程数量越多，协程的性能优势就越明显。
+
+        第二大优势就是不需要多线程的锁机制，因为只有一个线程，也不存在同时写变量冲突，在协程中控制共享资源不加锁，只需要判断状态就好了，所以执行效率比多线程高很多。
+
+        n = yield r:
+            n是从线程接到的，r是要返回去的，线程送到协程需要先实例化协程，然后用send
+              def consumer():
+                  r = ''
+                  while True:
+
+                      n = yield r
+                      if not n:
+                          return
+                      print('[CONSUMER] Consuming %s...' % n)
+                      r = '200 OK'
+
+              def produce(c):
+                  c.send(None)
+                  n = 0
+                  while n < 5:
+                      n = n + 1
+                      print('[PRODUCER] Producing %s...' % n)
+                      r = c.send(n)
+                      print('[PRODUCER] Consumer return: %s' % r)
+                  c.close()
+              if __name__ =='__main__':
+                  c = consumer()
+                  produce(c)
+        - asyncio:
+            @asyncio.coroutine把一个generator标记为coroutine类型，然后，我们就把这个coroutine扔到EventLoop中执行。
+            asyncio提供了完善的异步IO支持；
+            异步操作需要在coroutine中通过yield from完成；
+            多个coroutine可以封装成一组Task然后并发执行。
+        - async/await:
+            async和await是针对coroutine的新语法，要使用新的语法，只需要做两步简单的替换：
+            把@asyncio.coroutine替换为async；
+            把yield from替换为await。
+
+            代码部分：
+            
+              @asyncio.coroutine
+              def hello():
+                  print("Hello world!")
+                  r = yield from asyncio.sleep(1)
+                  print("Hello again!")
+
+              用新语法重新编写如下：
+
+              async def hello():
+                  print("Hello world!")
+                  r = await asyncio.sleep(1)
+                  print("Hello again!")
 
   10.GIL锁:
       全局解析器锁，保证同一个时刻，同一个进程只有一个线程被CPU调度。一等程度上保证安全。
@@ -64,4 +186,36 @@ python 问题整理
 
 
   11.进程如何实现共享:
-      用特殊的queue,pip,manager
+      用特殊的queue,pipe,manager
+      - queue 底层是pipe，升级版的queue.Queue，用于进程间的交流
+              Queue.Queue是进程内非阻塞队列。
+              multiprocess.Queue是跨进程通信队列。
+              多进程前者是各自私有，后者是各子进程共有。
+              from queue import Queue 这个是普通的队列模式，类似于普通列表，先进先出模式，get方法会阻塞请求，直到有数据get出来为止
+              from multiprocessing.Queue import Queue（各子进程共有）这个是多进程并发的Queue队列，用于解决多进程间的通信问题。
+              普通Queue实现不了。例如来跑多进程对一批IP列表进行运算，运算后的结果都存到Queue队列里面，这个就必须使用multiprocessing提供的Queue来实现
+      - manager:在父进程与子进程间通信，不用池则不需要Manager，Manager().Queue()
+
+  三舅系列问题：
+      1.Submask:he subnet mask is used by the TCP/IP protocol to determine whether a host is on the local subnet or on a remote network.
+        - IP address: 2 parts: Network/host: IP class A address consists of 8 bits identifying the network and 24 bits identifying the host.
+                      - default subnet mask for a class A IP address is 8 bits long. (or, written in dotted decimal notation, 255.0.0.0).
+        子网掩码：不是某个IP的网络号和主机号决定子网掩码是什么，而是子网掩码决定了某个IP地址的网络号与主机号是什么，IP地址是要搭配子网掩码使用的。
+        例如上面的子网掩码决定了192.168.1.199的前三段192.168.1是网络号，最后一段199是主机号。
+        测量两个IP是否属于同一个网段的一个工具（应该说是让你知道某个IP地址的网络号与主机号分别是什么）
+        一个IP地址，其实是32个二进制组成，而加了个/24，则说明前24个1是网络地址，例如XXX.XXX.XXX.0/25肯定有126个子IP(32-25)^2-2
+      2.DHCP：动态主机设置协议（英语：Dynamic Host Configuration Protocol，DHCP）：主要作用是集中的管理、分配IP地址，使网络环境中的主机动态的获得IP地址、
+      Gateway地址、DNS服务器地址等信息，并能够提升地址的使用率。
+        -1) 自动分配方式（Automatic Allocation）
+        -2) 动态分配方式（Dynamic Allocation）
+        -3) 手工分配方式（Manual Allocation）
+      3. DNS解析：网址对应的ip地址，但是QQ能上，软件能打开，因为是IP直连
+      4. NAT：私有网段地址：10/8,172.16/12,192.168/16：
+              内网IP，通过NAT特定的端口，把自己的数据包放出去，NAT其实已经改写了IP。
+              如果DDOS，无法追踪到具体的哪个内网IP，除非自己改变协议
+
+  Python问题：
+      1.json.dumps只能dump dict, 不能直接dict class student，所以json.dumps(s, default=lambda obj: obj.__dict__)，用lambda把object换成字典
+      Python语言特定的序列化模块是pickle，但如果要把序列化搞得更通用、更符合Web标准，就可以使用json模块。
+      json模块的dumps()和loads()函数是定义得非常好的接口的典范。当我们使用时，只需要传入一个必须的参数。
+      但是，当默认的序列化或反序列机制不满足我们的要求时，我们又可以传入更多的参数来定制序列化或反序列化的规则，既做到了接口简单易用，又做到了充分的扩展性和灵活性。
