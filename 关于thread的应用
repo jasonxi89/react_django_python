@@ -1,0 +1,14 @@
+Thread/Progress
+
+需要.start()
+如果等待需要.join
+
+pool -> map_asyno/apply_assyno
+
+map一起启动，只要把变量丢进去行了
+apple要一个个自己写
+.close()
+.join()
+.determine()
+
+queue的时候如果是空，get会卡住，所以queue前最好.empty()判断下是不是空

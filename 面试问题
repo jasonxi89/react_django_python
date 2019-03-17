@@ -163,7 +163,7 @@ python 问题整理
             把yield from替换为await。
 
             代码部分：
-            
+
               @asyncio.coroutine
               def hello():
                   print("Hello world!")
@@ -213,9 +213,39 @@ python 问题整理
       4. NAT：私有网段地址：10/8,172.16/12,192.168/16：
               内网IP，通过NAT特定的端口，把自己的数据包放出去，NAT其实已经改写了IP。
               如果DDOS，无法追踪到具体的哪个内网IP，除非自己改变协议
+      CPU: 硬盘 -> memory -> cache
+      周边设备/储存设备/CPU
+      test generator
+      pro
+      frame robot: build lib/share resources
+      widgeshot
+      连接：联通/最大量：
+      DUT：under test
 
   Python问题：
       1.json.dumps只能dump dict, 不能直接dict class student，所以json.dumps(s, default=lambda obj: obj.__dict__)，用lambda把object换成字典
       Python语言特定的序列化模块是pickle，但如果要把序列化搞得更通用、更符合Web标准，就可以使用json模块。
       json模块的dumps()和loads()函数是定义得非常好的接口的典范。当我们使用时，只需要传入一个必须的参数。
       但是，当默认的序列化或反序列机制不满足我们的要求时，我们又可以传入更多的参数来定制序列化或反序列化的规则，既做到了接口简单易用，又做到了充分的扩展性和灵活性。
+
+Robot Framework:
+    1.特点：
+      - 使用简单
+      - 丰富的库
+      - 可以自己开发库
+      - Selenium配合一起开发爬虫
+      自己开发django/Restful API， 然后就想自己测试下。
+      运维工具
+    2.如何开发标准库：
+      新建文件夹
+      文件夹内，建个库名.py
+      然后建个__ini__.py
+      导入继承该类，
+      并且声明个ROBOT_LIBRARY_SCOPE = 'GLOBAL'的全局变量
+      robot 输入的都是str,如果是数字要搞个类型转换add(3,5) =35
+    3. evalute
+      可以直接调用python的库
+    4.Selenium
+      模拟点击操作，Python自带的库更多的是发链接
+      前者属于解释型的动态类型(弱类型)语言,后者属于静态的编译型的强类型语言.
+      
